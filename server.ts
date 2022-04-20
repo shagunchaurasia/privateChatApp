@@ -20,10 +20,16 @@ const typeDefs = gql`
   }
 
   type User {
-    id: ID
-    firstName: String
-    lastName: String
-    email: String
+    id: ID!
+    firstName: String!
+    lastName: String!
+    email: String!
+    toDos: [ToDo]
+  }
+
+  type ToDo {
+    title: String!
+    by: ID!
   }
 `;
 
@@ -44,6 +50,21 @@ const users = [
   },
 ];
 
+const toDos = [
+  {
+    title: "Buy Book",
+    by: "2324889",
+  },
+  {
+    title: "Write Code",
+    by: "23432487",
+  },
+  {
+    title: "Complete Course",
+    by: "23432487",
+  },
+];
+
 const resolvers = {
   Query: {
     greet: () => "Hello world!",
@@ -51,7 +72,17 @@ const resolvers = {
     user: (parent: any, args: any, context: any) => {
       console.log(args.id);
       console.log(users);
+      const {userLoggedIn} = context;
+      if(!userLoggedIn){
+        throw new Error("You are not logged in")
+      }
       return users.find((item) => item.id == args.id);
+    },
+  },
+  User: {
+    toDos: (parent: any) => {
+      console.log(parent);
+      return toDos.filter((item) => item.by == parent.id);
     },
   },
   Mutation: {
@@ -67,7 +98,11 @@ const resolvers = {
   },
 };
 
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: { userLoggedIn: false },
+});
 
 // The `listen` method launches a web server.
 server.listen().then(({ url }) => {
